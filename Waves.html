@@ -1,0 +1,219 @@
+<html>
+<head>
+	<div style="display:none;">
+		Last edit time:	01/02/2015
+		Created by:		"Matthew Carter"
+	</div>
+</head>
+<body>
+
+<table style="width:100%">
+	<tr>
+		<td>
+			<canvas id="myCanvas" width="1080" height="720" style="border:1px solid #000000;">
+				Your browser does not support the HTML5 canvas.
+			</canvas>
+		</td>
+    		<td>
+			<table style="width:100%">
+		  		<tr>
+					<td>
+						<b>Amplitude|Wavelength</b>
+						<div contenteditable>
+						<table border="1" style="width:100%" id="waves">
+							<tr>
+								<td>0</td>
+								<td>0</td>
+								<td><input type="range" id="speed0" min="-1" value="0" max="1"></td>
+				  			</tr>
+				  			<tr>
+								<td>0</td>
+								<td>0</td>
+								<td><input type="range" id="speed1" min="-1" value="0" max="1"></td>
+				  			</tr>
+				  			<tr>
+								<td>0</td>
+								<td>0</td>
+								<td><input type="range" id="speed2" min="-1" value="0" max="1"></td>
+				  			</tr>
+				  			<tr>
+								<td>0</td>
+								<td>0</td>
+								<td><input type="range" id="speed3" min="-1" value="0" max="1"></td>
+				  			</tr>
+				  			<tr>
+								<td>0</td>
+								<td>0</td>
+								<td><input type="range" id="speed4" min="-1" value="0" max="1"></td>
+				  			</tr>
+				  			<tr>
+								<td>0</td>
+								<td>0</td>
+								<td><input type="range" id="speed5" min="-1" value="0" max="1"></td>
+				  			</tr>
+						</table>
+						</div>
+						<button onclick="reloadWaves()">Recalculate</button><button onclick="reset()">Reset</button><br/>
+						<input type="range" id="timescaleSlider" min="0" value="5" max="10"><div id="timescaleLabel">Timescale: 1</div></br>
+						<input type="checkbox" id="showResultant">Show resultant</input><br/>
+						<input type="checkbox" id="showWaves" checked>Show waves</input><br/>
+						<button onclick="standWave()">Setup standing wave <br/>(number of antinodes)</button><input type="text" id="stand"><br/>
+					</td>
+		  		</tr>
+			</table>
+	
+		</td> 
+  	</tr>
+</table>
+
+
+<script>
+var c = document.getElementById("myCanvas");
+var ctx = c.getContext("2d");
+reset();
+
+var autoRecalculate = setInterval(function () {autoCalc()}, 1000/360);
+
+var timescale = 1;
+document.getElementById("timescaleSlider").addEventListener("mousemove", function() {timescale = document.getElementById("timescaleSlider").value/5;document.getElementById("timescaleLabel").innerHTML = "Timescale: " + timescale} );
+
+var timer = 0;
+function autoCalc() {
+	timer = timer + timescale;
+	if(timer > 360000) {
+		timer = 0;
+	}
+//console.log(timer);
+	recalculate(timer);
+}
+
+var waves = [];
+function reloadWaves() {
+	waves = [];
+	//Load wave data
+	var refTab=document.getElementById("waves");
+	for ( var i = 0; row = refTab.rows[i]; i++ ) {
+		row = refTab.rows[i];
+		var property = [];
+		//console.log("---");
+		property.push(row.cells[0].firstChild.nodeValue);
+		//console.log(row.cells[0].firstChild.nodeValue);
+		property.push(row.cells[1].firstChild.nodeValue);
+		//console.log(row.cells[1].firstChild.nodeValue);
+		property.push(document.getElementById("speed" + i).value);
+		//console.log(document.getElementById("speed" + i).value);
+		waves.push(property);
+	}
+	timer = 0;
+}
+
+
+function recalculate(time) {
+	
+	var resultantWave = [];
+	for (i = 0; i <= c.width; i++) {
+		resultantWave[i] = 0;
+	}
+	//render waves
+	ctx.clearRect(0,0,c.width,c.height);
+	ctx.strokeStyle="#000000";
+	var waveloop = waves.length;
+	while(waveloop--) {
+		var currentWave = waves[waveloop];
+		
+		var amplitude = currentWave[0] * 90;
+		if(amplitude == 0) {
+			continue;
+		}
+		var wavelength = 2/currentWave[1];
+		if(wavelength == 0) {
+			continue;
+		}
+		
+		
+		var yCoord = (c.height/2);
+		var reverse = 0;
+		if(currentWave[2] < 0) {
+			reverse = 1;
+		}
+		
+		ctx.beginPath();
+		ctx.moveTo(0,yCoord);
+		for (var i = 1; i < c.width; i++) {
+			yCoord = amplitude * Math.sin(  ( (i * wavelength) - (time*currentWave[2])) * (Math.PI/180));
+			resultantWave[i] += yCoord;
+			ctx.lineTo(i,yCoord  + (c.height/2));
+		}
+		if(document.getElementById('showWaves').checked) {ctx.stroke();}
+	}
+	//Render resultant wave
+	if(document.getElementById('showResultant').checked) {
+		ctx.strokeStyle="#FF0000";
+		ctx.beginPath();
+		ctx.moveTo(0,(c.height/2));
+		for (i = 1; i < c.width; i++) {
+			ctx.lineTo(i,resultantWave[i] + (c.height/2));
+		}
+		ctx.stroke();
+	}
+	//Render equilibrium line
+	ctx.strokeStyle="#00FF00";
+	ctx.beginPath();
+	ctx.moveTo(0,(c.height/2));
+	ctx.lineTo(c.width,(c.height/2));
+	ctx.stroke();		
+	
+	return 1;
+}
+
+var zeroArray;
+function reset() {
+	var refTab=document.getElementById("waves");
+	for ( var i = 0; row = refTab.rows[i]; i++ ) {
+		row = refTab.rows[i];
+		for ( var j = 0; col = row.cells[j]; j++ ) {
+			col.firstChild.nodeValue = 0;
+		}
+	}
+	zeroArray = [];
+	for (i = 0; i <= c.width; i++) {
+		zeroArray[i] = 0;
+	}
+	reloadWaves();
+}
+
+function standWave() {
+	var fnum = document.getElementById("stand").value;
+	document.getElementById("stand").value = null;
+	var refTab=document.getElementById("waves");
+	for ( var i = 0; row = refTab.rows[i]; i++ ) {
+		row = refTab.rows[i];
+		for ( var j = 0; col = row.cells[j]; j++ ) {
+			col.firstChild.nodeValue = 0;
+		}
+	}
+	refTab.rows[0].cells[0].firstChild.nodeValue = 1;
+	refTab.rows[0].cells[1].firstChild.nodeValue = (12/fnum);
+	refTab.rows[0].cells[2].firstChild.getElementById("speed").value = 1;
+
+	refTab.rows[1].cells[0].firstChild.nodeValue = 1;
+	refTab.rows[1].cells[1].firstChild.nodeValue = (12/fnum);
+	refTab.rows[1].cells[2].firstChild.getElementById("speed").value = -1;
+
+	document.getElementById("showWaves").checked = true;
+	document.getElementById("showResultant").checked = true;
+	reloadWaves();
+}
+
+function getAngle(angle,reverse) {
+	if(reverse) {
+		return 360000-angle;
+	}
+	return angle;
+}
+
+
+</script>
+
+</body>
+</html>
