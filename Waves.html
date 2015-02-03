@@ -172,9 +172,9 @@ function reset() {
 	var refTab=document.getElementById("waves");
 	for ( var i = 0; row = refTab.rows[i]; i++ ) {
 		row = refTab.rows[i];
-		for ( var j = 0; col = row.cells[j]; j++ ) {
-			col.firstChild.nodeValue = 0;
-		}
+		row.cells[0].firstChild.nodeValue = 0;
+		row.cells[1].firstChild.nodeValue = 0;
+		document.getElementById("speed" + i).value = 0;
 	}
 	zeroArray = [];
 	for (i = 0; i <= c.width; i++) {
@@ -195,11 +195,11 @@ function standWave() {
 	}
 	refTab.rows[0].cells[0].firstChild.nodeValue = 1;
 	refTab.rows[0].cells[1].firstChild.nodeValue = (12/fnum);
-	refTab.rows[0].cells[2].firstChild.getElementById("speed").value = 1;
+	document.getElementById("speed0").value = 1;
 
 	refTab.rows[1].cells[0].firstChild.nodeValue = 1;
 	refTab.rows[1].cells[1].firstChild.nodeValue = (12/fnum);
-	refTab.rows[1].cells[2].firstChild.getElementById("speed").value = -1;
+	document.getElementById("speed1").value = -1;
 
 	document.getElementById("showWaves").checked = true;
 	document.getElementById("showResultant").checked = true;
